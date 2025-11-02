@@ -25,7 +25,16 @@ class Sale extends Model
         'due_date',
         'notes',
         'pdf_path',
-        'created_by'
+        'created_by',
+        'paid_amount',
+        'remaining_amount'
+    ];
+    
+    protected $attributes = [
+        'paid_sum' => 0,
+        'balance_due' => 0,
+        'paid_amount' => 0,
+        'remaining_amount' => 0
     ];
 
     protected $casts = [
@@ -39,6 +48,8 @@ class Sale extends Model
         'issue_date' => 'date',
         'due_date' => 'date'
     ];
+
+    protected $appends = ['profit', 'items_count'];
 
     protected static function boot()
     {
@@ -74,17 +85,25 @@ class Sale extends Model
     // Scopes
     public function scopeUnpaid($query)
     {
-        return $query->where('status', 'issued')->where('paid_sum', 0);
+        return $query->where(function($q) {
+            $q->where('paid_sum', 0)
+              ->orWhereNull('paid_sum');
+        })->where('status', '!=', 'void');
     }
 
     public function scopePartiallyPaid($query)
     {
-        return $query->where('status', 'partially_paid');
+        return $query->whereColumn('paid_sum', '<', 'total')
+                     ->where('paid_sum', '>', 0)
+                     ->whereNotNull('paid_sum')
+                     ->where('status', '!=', 'void');
     }
 
     public function scopePaid($query)
     {
-        return $query->where('status', 'paid');
+        return $query->whereColumn('paid_sum', '>=', 'total')
+                     ->whereNotNull('paid_sum')
+                     ->where('status', '!=', 'void');
     }
 
     public function scopeVoid($query)
@@ -131,5 +150,32 @@ class Sale extends Model
         $this->total = $this->subtotal - $this->discount + $this->tax + $this->shipping;
         $this->balance_due = $this->total - $this->paid_sum;
         $this->save();
+    }
+
+    // Accessors
+    public function getProfitAttribute()
+    {
+        if (!$this->relationLoaded('items')) {
+            $this->load('items.product');
+        }
+        
+        $totalProfit = 0;
+        foreach ($this->items as $item) {
+            $costPrice = $item->product->cost_price ?? 0;
+            $sellingPrice = $item->price;
+            $profit = ($sellingPrice - $costPrice) * $item->quantity;
+            $totalProfit += $profit;
+        }
+        
+        return round($totalProfit, 2);
+    }
+
+    public function getItemsCountAttribute()
+    {
+        if (!$this->relationLoaded('items')) {
+            $this->load('items');
+        }
+        
+        return $this->items->sum('quantity');
     }
 }

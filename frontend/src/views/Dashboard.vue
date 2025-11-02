@@ -106,7 +106,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { DollarSign, TrendingUp, Package, AlertTriangle, Users } from 'lucide-vue-next'
 import api from '@/services/api'
 import { useToast } from 'vue-toastification'
@@ -134,5 +134,15 @@ const fetchDashboard = async () => {
 
 onMounted(() => {
   fetchDashboard()
+  
+  // Auto-refresh every 5 minutes to keep data fresh
+  const refreshInterval = setInterval(() => {
+    fetchDashboard()
+  }, 5 * 60 * 1000) // 5 minutes
+  
+  // Cleanup on unmount
+  onUnmounted(() => {
+    clearInterval(refreshInterval)
+  })
 })
 </script>

@@ -1,9 +1,16 @@
 RewriteEngine On
 
-# Serve assets from frontend/dist
+DirectoryIndex frontend/dist/index.html
+
+## Serve built frontend (Vite build) under /parfumes
+
+# 1) Serve static assets from frontend/dist/assets
 RewriteRule ^assets/(.*)$ frontend/dist/assets/$1 [L]
 
-# Serve root index.html for all other routes (SPA)
+# 2) Proxy API routes to backend
+RewriteRule ^api/(.*)$ backend/public/api/$1 [L]
+
+# 3) Fallback all other routes to built index.html (SPA)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^ index.html [L]
+RewriteRule ^ frontend/dist/index.html [L]

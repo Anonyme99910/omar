@@ -13,12 +13,9 @@ class StockController extends Controller
     {
         $query = Product::query();
         
-        // Calculate available stock
-        $query->selectRaw('products.*, (stock_quantity - reserved_qty) as available_qty');
-        
         // Filter low stock
         if ($request->has('low_stock') && $request->low_stock) {
-            $query->whereRaw('stock_quantity <= min_stock_level');
+            $query->whereColumn('quantity', '<=', 'alert_quantity');
         }
         
         // Search
@@ -32,12 +29,11 @@ class StockController extends Controller
             });
         }
         
-        $products = $query->with(['category', 'brand'])
-            ->orderBy('name', 'asc')
+        $products = $query->orderBy('name_ar', 'asc')
             ->paginate(50);
         
         // Get low stock count
-        $lowStockCount = Product::whereRaw('stock_quantity <= min_stock_level')->count();
+        $lowStockCount = Product::whereColumn('quantity', '<=', 'alert_quantity')->count();
         
         return response()->json([
             'products' => $products,
@@ -77,8 +73,8 @@ class StockController extends Controller
         $product = Product::findOrFail($request->product_id);
         
         DB::transaction(function () use ($product, $request) {
-            $previousStock = $product->stock_quantity;
-            $product->stock_quantity += $request->quantity;
+            $previousStock = $product->quantity;
+            $product->quantity += $request->quantity;
             $product->save();
             
             InventoryMovement::create([
@@ -86,7 +82,7 @@ class StockController extends Controller
                 'type' => 'manual_adjust',
                 'quantity' => $request->quantity,
                 'previous_stock' => $previousStock,
-                'new_stock' => $product->stock_quantity,
+                'new_stock' => $product->quantity,
                 'notes' => $request->note,
                 'moved_at' => now(),
                 'created_by' => auth()->id()
@@ -101,9 +97,7 @@ class StockController extends Controller
     
     public function lowStock()
     {
-        $products = Product::whereRaw('stock_quantity <= min_stock_level')
-            ->with(['category', 'brand'])
-            ->selectRaw('products.*, (stock_quantity - reserved_qty) as available_qty')
+        $products = Product::whereColumn('quantity', '<=', 'alert_quantity')
             ->get();
             
         return response()->json($products);

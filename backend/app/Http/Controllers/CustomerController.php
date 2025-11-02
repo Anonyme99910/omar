@@ -10,7 +10,7 @@ class CustomerController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Customer::select(['id', 'name', 'phone', 'address', 'total_purchases', 'total_orders', 'created_at']);
+        $query = Customer::select(['id', 'name', 'phone', 'address', 'segment', 'total_purchases', 'total_orders', 'created_at']);
 
         if ($request->has('search')) {
             $search = $request->search;
@@ -30,14 +30,15 @@ class CustomerController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'phone' => 'required|string|max:20',
-            'address' => 'nullable|string'
+            'address' => 'nullable|string',
+            'segment' => 'nullable|in:جملة,قطاعي,صفحة'
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $customer = Customer::create($request->only(['name','phone','address']));
+        $customer = Customer::create($request->only(['name','phone','address','segment']));
         return response()->json($customer, 201);
     }
 
@@ -72,14 +73,23 @@ class CustomerController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'string|max:255',
             'phone' => 'string|max:20',
-            'address' => 'nullable|string'
+            'address' => 'nullable|string',
+            'segment' => 'nullable|in:جملة,قطاعي,صفحة'
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $customer->update($request->only(['name','phone','address']));
+        // Only update fields that are present in request
+        $data = $request->only(['name','phone','address','segment']);
+        
+        // Remove segment if it's null or empty to prevent setting NULL
+        if (empty($data['segment'])) {
+            unset($data['segment']);
+        }
+        
+        $customer->update($data);
         return response()->json($customer);
     }
 

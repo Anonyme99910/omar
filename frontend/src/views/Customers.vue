@@ -19,15 +19,26 @@
           <tr>
             <th>الاسم</th>
             <th>الهاتف</th>
+            <th>الشريحة</th>
             <th>إجمالي المشتريات</th>
             <th>عدد الطلبات</th>
             <th>الإجراءات</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="customer in filteredCustomers" :key="customer.id">
+          <tr v-for="customer in filteredCustomers" :key="`customer-${customer.id}-${customer.segment}`">
             <td class="font-medium">{{ customer.name }}</td>
             <td class="font-mono">{{ toLatinNumbers(customer.phone) }}</td>
+            <td>
+              <span :class="[
+                'badge',
+                customer.segment === 'جملة' ? 'badge-success' :
+                customer.segment === 'قطاعي' ? 'badge-primary' :
+                'badge-warning'
+              ]">
+                {{ customer.segment || 'قطاعي' }}
+              </span>
+            </td>
             <td class="font-bold text-green-600">{{ formatCurrency(customer.total_purchases) }}</td>
             <td>{{ toLatinNumbers(customer.total_orders) }}</td>
             <td>
@@ -66,6 +77,14 @@
             <label class="block text-sm font-medium mb-2">العنوان</label>
             <textarea v-model="customerForm.address" rows="3" class="input"></textarea>
           </div>
+          <div>
+            <label class="block text-sm font-medium mb-2">الشريحة</label>
+            <select v-model="customerForm.segment" class="input" required>
+              <option value="جملة">جملة</option>
+              <option value="قطاعي">قطاعي</option>
+              <option value="صفحة">صفحة</option>
+            </select>
+          </div>
           
           <div class="flex gap-3 justify-end mt-6">
             <button type="button" @click="closeModal" class="btn btn-secondary">إلغاء</button>
@@ -96,7 +115,8 @@ const editingId = ref(null)
 const customerForm = ref({
   name: '',
   phone: '',
-  address: ''
+  address: '',
+  segment: 'قطاعي'
 })
 
 const filteredCustomers = computed(() => {
@@ -125,16 +145,37 @@ const fetchCustomers = async () => {
 
 const submitCustomer = async () => {
   try {
+    // Only send allowed fields
+    const payload = {
+      name: customerForm.value.name,
+      phone: customerForm.value.phone,
+      address: customerForm.value.address,
+      segment: customerForm.value.segment
+    }
+    
+    console.log('Submitting customer form:', payload)
     if (showEditModal.value) {
-      await api.updateCustomer(editingId.value, customerForm.value)
+      console.log('Updating customer ID:', editingId.value)
+      const response = await api.updateCustomer(editingId.value, payload)
+      console.log('Update response:', response.data)
+      
+      // Update the customer in the list immediately
+      const index = customers.value.findIndex(c => c.id === editingId.value)
+      if (index !== -1) {
+        customers.value[index] = { ...customers.value[index], ...response.data }
+      }
+      
       toast.success('تم تحديث العميل بنجاح')
     } else {
-      await api.createCustomer(customerForm.value)
+      const response = await api.createCustomer(payload)
+      console.log('Create response:', response.data)
       toast.success('تم إضافة العميل بنجاح')
     }
     closeModal()
-    fetchCustomers()
+    await fetchCustomers()
   } catch (error) {
+    console.error('Submit error:', error)
+    console.error('Error response:', error.response?.data)
     toast.error('حدث خطأ')
   }
 }
@@ -164,7 +205,8 @@ const closeModal = () => {
   customerForm.value = {
     name: '',
     phone: '',
-    address: ''
+    address: '',
+    segment: 'قطاعي'
   }
 }
 

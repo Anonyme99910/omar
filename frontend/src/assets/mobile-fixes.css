@@ -1,0 +1,73 @@
+/* Mobile Responsive Fixes */
+
+/* Make all tables scrollable horizontally on mobile */
+@media (max-width: 768px) {
+  .card {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .table-container,
+  .table-responsive,
+  .overflow-x-auto,
+  .bg-white.rounded-lg.shadow {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+  
+  table {
+    min-width: 800px !important; /* Ensure table is wider than mobile screen */
+  }
+  
+  /* Fix for cards containing tables */
+  .card:has(table) {
+    overflow-x: auto;
+  }
+  
+  /* Ensure buttons don't wrap awkwardly */
+  .btn-group {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  
+  /* Fix form inputs on mobile */
+  input, select, textarea {
+    max-width: 100%;
+  }
+  
+  /* Better spacing for mobile */
+  .card {
+    margin: 0.5rem;
+    padding: 0.75rem;
+  }
+  
+  /* Fix modal on mobile */
+  .modal-content {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
+
+/* Scrollbar styling for better UX */
+.overflow-x-auto::-webkit-scrollbar,
+.card::-webkit-scrollbar {
+  height: 8px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track,
+.card::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb,
+.card::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover,
+.card::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

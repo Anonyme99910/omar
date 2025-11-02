@@ -57,8 +57,12 @@ export default {
   // Products
   getProducts: (params) => api.get('/products', { params }),
   getProduct: (id) => api.get(`/products/${id}`),
-  createProduct: (data) => api.post('/products', data),
-  updateProduct: (id, data) => api.put(`/products/${id}`, data),
+  createProduct: (data) => api.post('/products', data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  updateProduct: (id, data) => api.post(`/products/${id}`, data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
   deleteProduct: (id) => api.delete(`/products/${id}`),
   searchByBarcode: (barcode) => api.get(`/products/barcode/${barcode}`),
   getLowStockProducts: () => api.get('/products/low-stock/list'),
@@ -129,8 +133,14 @@ export default {
   // Stock Management
   getStock: (params) => api.get('/stock', { params }),
   getStockMovements: (params) => api.get('/stock/movements', { params }),
-  adjustStock: (data) => api.post('/stock/adjust', data),
+  adjustStockBulk: (data) => api.post('/stock/adjust', data), // ✅ Renamed to avoid conflict
   getLowStock: () => api.get('/stock/low-stock'),
+
+  // Damaged Products
+  getDamagedProducts: () => api.get('/damaged-products'),
+  createDamagedProduct: (data) => api.post('/damaged-products', data),
+  getDamagedStats: () => api.get('/damaged-products/stats'),
+  deleteDamagedProduct: (id) => api.delete(`/damaged-products/${id}`),
 
   // Reports
   getDashboard: () => api.get('/reports/dashboard'),
@@ -145,7 +155,65 @@ export default {
   createEmployee: (data) => api.post('/employees', data),
   updateEmployee: (id, data) => api.put(`/employees/${id}`, data),
   deleteEmployee: (id) => api.delete(`/employees/${id}`),
+  updateEmployeePermissions: (id, data) => api.put(`/employees/${id}/permissions`, data),
 
   // Roles
   getRoles: () => api.get('/roles'),
+
+  // Profile
+  getProfile: () => api.get('/profile'),
+  updateProfile: (data) => api.put('/profile', data),
+
+  // Packages
+  getPackages: () => api.get('/packages'),
+  getPackage: (id) => api.get(`/packages/${id}`),
+  createPackage: (data) => {
+    const formData = new FormData()
+    Object.keys(data).forEach(key => {
+      if (key === 'photo' && data[key]) {
+        formData.append('photo', data[key])
+      } else if (Array.isArray(data[key])) {
+        data[key].forEach((item, index) => {
+          formData.append(`${key}[${index}]`, item)
+        })
+      } else {
+        formData.append(key, data[key])
+      }
+    })
+    return api.post('/packages', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+  updatePackage: (id, data) => {
+    const formData = new FormData()
+    Object.keys(data).forEach(key => {
+      if (key === 'photo' && data[key]) {
+        formData.append('photo', data[key])
+      } else if (Array.isArray(data[key])) {
+        data[key].forEach((item, index) => {
+          formData.append(`${key}[${index}]`, item)
+        })
+      } else {
+        formData.append(key, data[key])
+      }
+    })
+    return api.post(`/packages/${id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+  deletePackage: (id) => api.delete(`/packages/${id}`),
+
+  // Expenses
+  getExpenses: (params) => api.get('/expenses', { params }),
+  getExpense: (id) => api.get(`/expenses/${id}`),
+  createExpense: (data) => api.post('/expenses', data),
+  updateExpense: (id, data) => api.put(`/expenses/${id}`, data),
+  deleteExpense: (id) => api.delete(`/expenses/${id}`),
+  getExpenseStatistics: (params) => api.get('/expenses/statistics', { params }),
+
+  // Expense Types
+  getExpenseTypes: () => api.get('/expense-types'),
+  createExpenseType: (data) => api.post('/expense-types', data),
+  updateExpenseType: (id, data) => api.put(`/expense-types/${id}`, data),
+  deleteExpenseType: (id) => api.delete(`/expense-types/${id}`),
 }

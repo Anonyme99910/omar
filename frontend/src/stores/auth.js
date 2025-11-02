@@ -12,6 +12,15 @@ export const useAuthStore = defineStore('auth', {
     isAdmin: (state) => state.user?.role === 'admin',
     isManager: (state) => state.user?.role === 'manager',
     isCashier: (state) => state.user?.role === 'cashier',
+    userPermissions: (state) => state.user?.permissions || [],
+    hasPermission: (state) => (permission) => {
+      if (state.user?.role === 'admin') return true
+      return state.user?.permissions?.includes(permission) || false
+    },
+    hasAnyPermission: (state) => {
+      if (state.user?.role === 'admin') return true
+      return (state.user?.permissions?.length || 0) > 0
+    }
   },
 
   actions: {
@@ -43,10 +52,11 @@ export const useAuthStore = defineStore('auth', {
 
     async fetchUser() {
       try {
-        const response = await api.me()
+        const response = await api.getProfile()
         this.user = response.data
         localStorage.setItem('user', JSON.stringify(response.data))
       } catch (error) {
+        console.error('Failed to fetch user:', error)
         this.logout()
       }
     },

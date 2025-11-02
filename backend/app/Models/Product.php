@@ -12,41 +12,30 @@ class Product extends Model
     protected $fillable = [
         'name',
         'name_ar',
-        'description',
-        'barcode',
         'sku',
-        'category_id',
-        'brand_id',
-        'cost_price',
         'selling_price',
-        'stock_quantity',
-        'min_stock_level',
-        'size',
-        'image',
-        'images',
+        'price_جملة',
+        'price_قطاعي',
+        'price_صفحة',
+        'volume_ml',
+        'quantity',
+        'alert_quantity',
+        'photos',
         'is_active'
     ];
 
     protected $casts = [
-        'cost_price' => 'decimal:2',
         'selling_price' => 'decimal:2',
-        'stock_quantity' => 'integer',
-        'min_stock_level' => 'integer',
-        'images' => 'array',
+        'price_جملة' => 'decimal:2',
+        'price_قطاعي' => 'decimal:2',
+        'price_صفحة' => 'decimal:2',
+        'quantity' => 'integer',
+        'alert_quantity' => 'integer',
+        'photos' => 'array',
         'is_active' => 'boolean',
     ];
 
-    protected $appends = ['profit_margin', 'is_low_stock'];
-
-    public function category()
-    {
-        return $this->belongsTo(Category::class);
-    }
-
-    public function brand()
-    {
-        return $this->belongsTo(Brand::class);
-    }
+    protected $appends = ['is_low_stock'];
 
     public function saleItems()
     {
@@ -58,16 +47,14 @@ class Product extends Model
         return $this->hasMany(InventoryMovement::class);
     }
 
-    public function getProfitMarginAttribute()
-    {
-        if ($this->cost_price > 0) {
-            return round((($this->selling_price - $this->cost_price) / $this->cost_price) * 100, 2);
-        }
-        return 0;
-    }
-
     public function getIsLowStockAttribute()
     {
-        return $this->stock_quantity <= $this->min_stock_level;
+        return $this->quantity <= $this->alert_quantity;
+    }
+
+    public function getPriceForSegment($segment)
+    {
+        $priceField = "price_{$segment}";
+        return $this->$priceField ?? $this->selling_price;
     }
 }

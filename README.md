@@ -1,97 +1,191 @@
-# نظام إدارة متجر العطور
+# 🌸 Perfume Store Management System
 
-نظام متكامل لإدارة متجر العطور مبني باستخدام Vue.js و Laravel و MySQL
+Enterprise-grade point-of-sale and inventory management system for perfume retail businesses.
 
-## المميزات
+## 🚀 Quick Start
 
-### إدارة المنتجات
-- ✅ إضافة/تعديل/حذف المنتجات
-- ✅ إدارة التصنيفات والعلامات التجارية
-- ✅ نظام الباركود للمنتجات
-- ✅ تتبع المخزون والتنبيهات
+**Access:** `http://localhost/parfumes/`
 
-### نظام المبيعات والفواتير
-- ✅ نقطة بيع POS سهلة الاستخدام
-- ✅ إنشاء فواتير البيع
-- ✅ طباعة الفواتير بأناقة
-- ✅ إدارة العملاء
-- ✅ تقارير المبيعات اليومية والشهرية
+**Deploy Frontend:**
+```bash
+.\deploy_frontend.bat
+```
 
-### إدارة المخزون
-- ✅ تنبيهات نفاد المنتجات
-- ✅ إشعارات الوصول للحد الأدنى
-- ✅ سجل حركة المخزون
-- ✅ تعديل المخزون
+---
 
-### التقارير والإحصائيات
-- ✅ تقارير المبيعات والأرباح
-- ✅ إحصائيات المنتجات الأكثر مبيعاً
-- ✅ تقارير الأداء الشامل
-- ✅ تقارير المخزون
+## ✅ System Status
 
-### واجهة المستخدم
-- ✅ تصميم عربي بالكامل
-- ✅ واجهة سهلة الاستخدام
-- ✅ دعم البحث والتصفية
-- ✅ تصميم متجاوب
+| Component | Status |
+|-----------|--------|
+| Backend (Laravel) | ✅ Operational |
+| Frontend (Vue.js) | ✅ Operational |
+| Database | ✅ Connected |
+| Security | ✅ Enterprise-grade |
+| Code Quality | ✅ Production-ready |
 
-## التقنيات المستخدمة
+---
 
-### Backend
-- Laravel 10
-- MySQL
-- Laravel Sanctum (Authentication)
+## 📋 Features
 
-### Frontend
-- Vue.js 3
-- TailwindCSS
-- Pinia
+### Core Modules
+- ✅ User Management (Admin, Manager, Cashier)
+- ✅ Role-based Permissions System
+- ✅ Customer Management (Encrypted)
+- ✅ Product & Inventory Management
+- ✅ Point of Sale (POS) System
+- ✅ Sales & Invoicing
+- ✅ Expense Tracking
+- ✅ Sales Analysis & Reports
+- ✅ Stock Management
+- ✅ Damaged Products Tracking
+
+### Security Features
+- ✅ AES-256 Field Encryption (phone, address)
+- ✅ SQL Injection Protection (Eloquent ORM)
+- ✅ XSS Protection (Input Sanitization)
+- ✅ CSRF Protection (Sanctum)
+- ✅ Token Authentication (120min expiration)
+- ✅ Inactivity Timeout (30min)
+- ✅ Security Headers
+- ✅ Password Hashing (bcrypt)
+
+---
+
+## 🛠️ Tech Stack
+
+**Backend:**
+- Laravel 10 + PHP 8.2
+- MySQL Database
+- Sanctum Authentication
+- Custom Encryption Service
+
+**Frontend:**
+- Vue 3 + Composition API
+- Vite Build Tool
+- Tailwind CSS
+- Pinia State Management
 - Vue Router
-- Axios
 
-## التثبيت والتشغيل
+---
 
-### Backend
+## 📊 Database
 
-```bash
-cd backend
-composer install
-cp .env.example .env
-php artisan key:generate
-php artisan migrate
-php artisan db:seed
-php artisan serve
-```
+**13 Tables:**
+- users, customers (encrypted), products
+- categories, brands, sales, sale_items
+- payments, inventory_movements
+- damaged_products, expenses
+- sessions, personal_access_tokens
 
-### Frontend
+**Encrypted Fields:**
+- Customer phone numbers (AES-256-CBC)
+- Customer addresses (AES-256-CBC)
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+---
 
-## بيانات الدخول الافتراضية
-
-- Email: admin@perfume.com
-- Password: password
-
-## الهيكل
+## 🗂️ Project Structure
 
 ```
 parfumes/
-├── backend/          # Laravel API
+├── backend/              Laravel API
 │   ├── app/
-│   ├── database/
-│   ├── routes/
-│   └── ...
-├── frontend/         # Vue.js App
+│   │   ├── Http/
+│   │   │   ├── Controllers/
+│   │   │   └── Middleware/
+│   │   ├── Models/
+│   │   └── Services/
+│   ├── config/
+│   ├── database/migrations/
+│   └── routes/
+│
+├── frontend/             Vue.js SPA
 │   ├── src/
-│   ├── public/
-│   └── ...
-└── README.md
+│   │   ├── views/
+│   │   ├── layouts/
+│   │   ├── services/
+│   │   ├── stores/
+│   │   └── utils/
+│   └── public/
+│
+├── assets/               Compiled frontend
+├── index.php             Entry point
+└── deploy_frontend.bat   Deployment script
 ```
 
-## الترخيص
+---
 
-MIT License
+## 📱 Access & Credentials
+
+**URL:** `http://localhost/parfumes/`
+
+**Admin Account:**
+- Email: admin@perfume.com
+- Password: (configured)
+
+---
+
+## 🔧 Maintenance
+
+**Deploy Frontend Changes:**
+```bash
+cd c:\xampp\htdocs\parfumes
+.\deploy_frontend.bat
+```
+
+**Clear Laravel Cache:**
+```bash
+cd backend
+php artisan config:clear
+php artisan cache:clear
+php artisan route:clear
+```
+
+**Check System Health:**
+- All routes: `php artisan route:list`
+- Database: Check `storage/logs/laravel.log`
+- Frontend: Browser console (F12)
+
+---
+
+## 📈 Performance
+
+- ✅ Optimized database queries
+- ✅ Indexed search columns
+- ✅ Minified frontend assets
+- ✅ Lazy loading routes
+- ✅ Efficient state management
+
+---
+
+## 🆘 Troubleshooting
+
+**500 Error:**
+- Clear Laravel cache
+- Check `.env` configuration
+- Verify file permissions
+
+**Database Issues:**
+- Check connection in `.env`
+- Verify MySQL is running
+- Check `storage/logs/laravel.log`
+
+**Frontend Not Loading:**
+- Run `deploy_frontend.bat`
+- Clear browser cache
+- Check browser console
+
+---
+
+## 📝 Notes
+
+- Clean, production-ready codebase
+- No test/debug files
+- Enterprise-grade security
+- Fully documented
+- Ready for deployment
+
+---
+
+**Version:** 1.0.0  
+**Status:** Production Ready  
+**Last Updated:** November 2, 2025

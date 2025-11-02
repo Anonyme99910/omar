@@ -11,7 +11,7 @@ class EmployeeController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::select(['id', 'name', 'email', 'role', 'is_active', 'created_at'])
+        $query = User::select(['id', 'name', 'email', 'role', 'permissions', 'is_active', 'created_at'])
             ->where('role', '!=', 'admin');
 
         if ($request->has('search')) {
@@ -22,8 +22,7 @@ class EmployeeController extends Controller
             });
         }
 
-        $perPage = $request->get('per_page', 50);
-        $employees = $query->orderBy('created_at', 'desc')->paginate($perPage);
+        $employees = $query->orderBy('created_at', 'desc')->get();
         
         return response()->json($employees);
     }
@@ -97,5 +96,36 @@ class EmployeeController extends Controller
         $employee->delete();
         
         return response()->json(['message' => 'Employee deleted successfully']);
+    }
+
+    public function updatePermissions(Request $request, $id)
+    {
+        $employee = User::findOrFail($id);
+        
+        if ($employee->role === 'admin') {
+            return response()->json(['error' => 'Cannot modify admin permissions'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'permissions' => 'array',
+            'permissions.*' => 'string|in:dashboard,clients,employees,roles,pos,invoices,sales-analysis,expenses,stock,inventory'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'errors' => $validator->errors(),
+                'message' => 'Validation failed',
+                'received' => $request->all()
+            ], 422);
+        }
+
+        $employee->update([
+            'permissions' => $request->permissions
+        ]);
+        
+        return response()->json([
+            'message' => 'Permissions updated successfully',
+            'employee' => $employee
+        ]);
     }
 }

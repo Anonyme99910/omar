@@ -13,42 +13,52 @@ class ReportController extends Controller
 {
     public function dashboard()
     {
-        $today = today();
+        // Get current date in configured timezone
+        $today = now()->startOfDay();
+        $tomorrow = now()->addDay()->startOfDay();
         $thisMonth = now()->startOfMonth();
+        $nextMonth = now()->addMonth()->startOfMonth();
 
-        // Today's statistics
-        $todaySales = Sale::whereDate('created_at', $today)
-            ->where('status', 'completed')
+        // Today's statistics (exclude void sales)
+        // Use >= today AND < tomorrow to ensure we only get today's sales
+        $todaySales = Sale::where('created_at', '>=', $today)
+            ->where('created_at', '<', $tomorrow)
+            ->where('status', '!=', 'void')
             ->sum('total');
 
-        $todayOrders = Sale::whereDate('created_at', $today)
-            ->where('status', 'completed')
+        $todayOrders = Sale::where('created_at', '>=', $today)
+            ->where('created_at', '<', $tomorrow)
+            ->where('status', '!=', 'void')
             ->count();
 
-        // This month's statistics
+        // This month's statistics (exclude void sales)
+        // Use >= start of month AND < start of next month
         $monthSales = Sale::where('created_at', '>=', $thisMonth)
-            ->where('status', 'completed')
+            ->where('created_at', '<', $nextMonth)
+            ->where('status', '!=', 'void')
             ->sum('total');
 
         $monthOrders = Sale::where('created_at', '>=', $thisMonth)
-            ->where('status', 'completed')
+            ->where('created_at', '<', $nextMonth)
+            ->where('status', '!=', 'void')
             ->count();
 
         // Inventory statistics
         $totalProducts = Product::count();
-        $lowStockProducts = Product::whereRaw('stock_quantity <= min_stock_level')->count();
-        $outOfStockProducts = Product::where('stock_quantity', 0)->count();
+        $lowStockProducts = Product::whereColumn('quantity', '<=', 'alert_quantity')->count();
+        $outOfStockProducts = Product::where('quantity', 0)->count();
 
-        // Total inventory value
-        $inventoryValue = Product::selectRaw('SUM(stock_quantity * cost_price) as total')
+        // Total inventory value (using retail price as base)
+        $inventoryValue = Product::selectRaw('SUM(quantity * price_قطاعي) as total')
             ->first()
             ->total ?? 0;
 
         // Top selling products this month
         $topProducts = SaleItem::select('product_id', DB::raw('SUM(quantity) as total_sold'))
-            ->whereHas('sale', function($q) use ($thisMonth) {
+            ->whereHas('sale', function($q) use ($thisMonth, $nextMonth) {
                 $q->where('created_at', '>=', $thisMonth)
-                  ->where('status', 'completed');
+                  ->where('created_at', '<', $nextMonth)
+                  ->where('status', '!=', 'void');
             })
             ->groupBy('product_id')
             ->orderBy('total_sold', 'desc')
@@ -87,7 +97,7 @@ class ReportController extends Controller
         $endDate = $request->end_date ?? now();
 
         $sales = Sale::whereBetween('created_at', [$startDate, $endDate])
-            ->where('status', 'completed')
+            ->where('status', '!=', 'void')
             ->with(['customer', 'items.product'])
             ->get();
 
@@ -106,14 +116,14 @@ class ReportController extends Controller
 
         // Sales by payment method
         $salesByPayment = Sale::whereBetween('created_at', [$startDate, $endDate])
-            ->where('status', 'completed')
+            ->whereIn('status', ['paid', 'partially_paid'])
             ->select('payment_method', DB::raw('SUM(total) as total'))
             ->groupBy('payment_method')
             ->get();
 
         // Daily sales
         $dailySales = Sale::whereBetween('created_at', [$startDate, $endDate])
-            ->where('status', 'completed')
+            ->whereIn('status', ['paid', 'partially_paid'])
             ->select(DB::raw('DATE(created_at) as date'), DB::raw('SUM(total) as total'), DB::raw('COUNT(*) as count'))
             ->groupBy('date')
             ->orderBy('date')
@@ -144,7 +154,7 @@ class ReportController extends Controller
             DB::raw('SUM(total_price) as total_revenue'))
             ->whereHas('sale', function($q) use ($startDate, $endDate) {
                 $q->whereBetween('created_at', [$startDate, $endDate])
-                  ->where('status', 'completed');
+                  ->whereIn('status', ['paid', 'partially_paid']);
             })
             ->groupBy('product_id')
             ->orderBy('total_sold', 'desc')
@@ -158,7 +168,7 @@ class ReportController extends Controller
             ->join('products', 'sale_items.product_id', '=', 'products.id')
             ->whereHas('sale', function($q) use ($startDate, $endDate) {
                 $q->whereBetween('created_at', [$startDate, $endDate])
-                  ->where('status', 'completed');
+                  ->whereIn('status', ['paid', 'partially_paid']);
             })
             ->groupBy('products.category_id')
             ->with('product.category')
@@ -171,7 +181,7 @@ class ReportController extends Controller
             ->join('products', 'sale_items.product_id', '=', 'products.id')
             ->whereHas('sale', function($q) use ($startDate, $endDate) {
                 $q->whereBetween('created_at', [$startDate, $endDate])
-                  ->where('status', 'completed');
+                  ->whereIn('status', ['paid', 'partially_paid']);
             })
             ->groupBy('products.brand_id')
             ->with('product.brand')
@@ -212,7 +222,7 @@ class ReportController extends Controller
         $endDate = $request->end_date ?? now();
 
         $sales = Sale::whereBetween('created_at', [$startDate, $endDate])
-            ->where('status', 'completed')
+            ->whereIn('status', ['paid', 'partially_paid'])
             ->with('items.product')
             ->get();
 

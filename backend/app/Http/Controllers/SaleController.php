@@ -37,7 +37,10 @@ class SaleController extends Controller
 
         // Filter by date range (use issue_date if available, fallback to created_at)
         if ($request->has('start_date') && $request->has('end_date')) {
-            $query->whereBetween(DB::raw('COALESCE(issue_date, DATE(created_at))'), [$request->start_date, $request->end_date]);
+            $query->whereRaw('DATE(COALESCE(issue_date, created_at)) BETWEEN ? AND ?', [
+                $request->start_date, 
+                $request->end_date
+            ]);
         }
 
         if ($request->has('customer_id')) {
@@ -126,7 +129,7 @@ class SaleController extends Controller
                 $product = Product::findOrFail($item['product_id']);
 
                 // Check stock
-                if ($product->stock_quantity < $item['quantity']) {
+                if ($product->quantity < $item['quantity']) {
                     throw new \Exception("Insufficient stock for product: {$product->name}");
                 }
 
@@ -140,8 +143,8 @@ class SaleController extends Controller
                 ]);
 
                 // Update product stock
-                $previousStock = $product->stock_quantity;
-                $product->stock_quantity -= $item['quantity'];
+                $previousStock = $product->quantity;
+                $product->quantity -= $item['quantity'];
                 $product->save();
 
                 // Create inventory movement
@@ -150,7 +153,7 @@ class SaleController extends Controller
                     'type' => 'sale',
                     'quantity' => -$item['quantity'],
                     'previous_stock' => $previousStock,
-                    'new_stock' => $product->stock_quantity,
+                    'new_stock' => $product->quantity,
                     'related_type' => 'sale',
                     'related_id' => $sale->id,
                     'reference' => $sale->invoice_number,
@@ -208,18 +211,19 @@ class SaleController extends Controller
             foreach ($sale->items as $item) {
                 $product = Product::find($item->product_id);
                 if ($product) {
-                    $previousStock = $product->stock_quantity;
-                    $product->stock_quantity += $item->quantity;
+                    $previousStock = $product->quantity;
+                    $product->quantity += $item->quantity;
                     $product->save();
 
                     InventoryMovement::create([
                         'product_id' => $product->id,
-                        'type' => 'in',
+                        'type' => 'return',
                         'quantity' => $item->quantity,
                         'previous_stock' => $previousStock,
-                        'new_stock' => $product->stock_quantity,
+                        'new_stock' => $product->quantity,
                         'reference' => $sale->invoice_number . ' (Cancelled)',
-                        'notes' => 'Sale cancellation'
+                        'notes' => 'Sale cancellation',
+                        'moved_at' => now()
                     ]);
                 }
             }
@@ -262,23 +266,33 @@ class SaleController extends Controller
 
     public function downloadPdf($id)
     {
-        $sale = Sale::with(['customer', 'items.product'])->findOrFail($id);
-        
-        // Generate PDF
-        $pdfContent = $this->generatePdfContent($sale);
-        
-        // Save to storage
-        $fileName = 'invoice-' . $sale->invoice_number . '.pdf';
-        $path = 'invoices/' . $fileName;
-        \Storage::disk('public')->put($path, $pdfContent);
-        
-        // Update sale with PDF path
-        $sale->update(['pdf_path' => $path]);
-        
-        // Return PDF for download
-        return response($pdfContent)
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"');
+        try {
+            $sale = Sale::with(['customer', 'items.product'])->findOrFail($id);
+            
+            // Generate PDF
+            $pdfContent = $this->generatePdfContent($sale);
+            
+            // Save to storage
+            $fileName = 'invoice-' . $sale->invoice_number . '.pdf';
+            $path = 'invoices/' . $fileName;
+            \Storage::disk('public')->put($path, $pdfContent);
+            
+            // Update sale with PDF path
+            $sale->update(['pdf_path' => $path]);
+            
+            // Return PDF for download
+            return response($pdfContent)
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"');
+        } catch (\Exception $e) {
+            \Log::error('PDF Generation Error: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            return response()->json([
+                'error' => 'Failed to generate PDF',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
     
     private function generatePdfContent($sale)
@@ -404,16 +418,15 @@ class SaleController extends Controller
             // Release reserved stock
             foreach ($sale->items as $item) {
                 $product = $item->product;
-                if ($product->reserved_qty >= $item->quantity) {
-                    $product->reserved_qty -= $item->quantity;
-                    $product->save();
+                // Reserved quantity feature removed
+                if (true) {
                     
                     InventoryMovement::create([
                         'product_id' => $product->id,
                         'type' => 'release',
                         'quantity' => $item->quantity,
-                        'previous_stock' => $product->stock_quantity,
-                        'new_stock' => $product->stock_quantity,
+                        'previous_stock' => $product->quantity,
+                        'new_stock' => $product->quantity,
                         'related_type' => 'sale',
                         'related_id' => $sale->id,
                         'notes' => 'Released due to invoice void',

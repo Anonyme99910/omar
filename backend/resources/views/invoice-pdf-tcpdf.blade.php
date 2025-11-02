@@ -1,11 +1,11 @@
 @php
     // Dynamic spacing based on item count
     $headerMargin = $spacing === 'tight' ? '8px' : ($spacing === 'compact' ? '10px' : '15px');
-    $headerPadding = $spacing === 'tight' ? '8px' : ($spacing === 'compact' ? '10px' : '15px');
-    $sectionMargin = $spacing === 'tight' ? '6px' : ($spacing === 'compact' ? '8px' : '15px');
-    $rowMargin = $spacing === 'tight' ? '3px' : ($spacing === 'compact' ? '5px' : '10px');
-    $cellPadding = $spacing === 'tight' ? '4px' : ($spacing === 'compact' ? '6px' : '8px');
-    $headerFontSize = $spacing === 'tight' ? '18px' : ($spacing === 'compact' ? '20px' : '24px');
+    $headerPadding = $spacing === 'tight' ? '12px' : ($spacing === 'compact' ? '15px' : '20px');
+    $sectionMargin = $spacing === 'tight' ? '6px' : ($spacing === 'compact' ? '8px' : '12px');
+    $rowMargin = $spacing === 'tight' ? '3px' : ($spacing === 'compact' ? '5px' : '8px');
+    $cellPadding = $spacing === 'tight' ? '5px' : ($spacing === 'compact' ? '7px' : '10px');
+    $headerFontSize = $spacing === 'tight' ? '20px' : ($spacing === 'compact' ? '24px' : '28px');
     $subHeaderFontSize = $spacing === 'tight' ? '12px' : ($spacing === 'compact' ? '14px' : '16px');
 @endphp
 
@@ -15,38 +15,44 @@
         direction: rtl;
         text-align: right;
         font-size: {{ $fontSize }}px;
+        background-color: #ffffff;
     }
     .header {
         text-align: center;
         margin-bottom: {{ $headerMargin }};
         padding: {{ $headerPadding }};
-        border-bottom: 3px solid #3b82f6;
-        background-color: #eff6ff;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 8px 8px 0 0;
     }
     .header h1 {
         font-size: {{ $headerFontSize }};
-        color: #1e40af;
-        margin-bottom: 3px;
+        color: #ffffff;
+        margin-bottom: 5px;
+        font-weight: bold;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     .header h2 {
         font-size: {{ $subHeaderFontSize }};
-        color: #64748b;
+        color: #f0f0f0;
+        font-weight: normal;
     }
     .info-table {
         width: 100%;
         margin-bottom: {{ $sectionMargin }};
-        background-color: #f8fafc;
+        background-color: #ffffff;
         border-collapse: collapse;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
     }
     .info-table td {
         padding: {{ $cellPadding }};
-        border: 1px solid #e2e8f0;
+        border: 1px solid #e5e7eb;
         text-align: right;
     }
     .info-table .info-label {
         font-weight: bold;
-        color: #1e293b;
-        background-color: #eff6ff;
+        color: #374151;
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
         width: 25%;
     }
     table {
@@ -55,20 +61,23 @@
         margin: {{ $sectionMargin }} 0;
     }
     th {
-        background-color: #3b82f6;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: #ffffff;
         padding: {{ $cellPadding }};
         text-align: right;
         font-weight: bold;
-        border: 1px solid #cbd5e1;
+        border: 1px solid #9ca3af;
     }
     td {
         padding: {{ $cellPadding }};
         text-align: right;
-        border: 1px solid #cbd5e1;
+        border: 1px solid #d1d5db;
     }
     tr:nth-child(even) {
-        background-color: #f8fafc;
+        background-color: #f9fafb;
+    }
+    tr:nth-child(odd) {
+        background-color: #ffffff;
     }
     .totals {
         width: 50%;
@@ -81,25 +90,28 @@
         margin-bottom: 2px;
     }
     .totals-row.total {
-        background-color: #3b82f6;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: #ffffff;
         font-weight: bold;
-        font-size: 13px;
-        padding: 8px 10px;
+        font-size: 14px;
+        padding: 10px 12px;
         margin-top: 8px;
+        border-radius: 6px;
     }
     .totals-row.paid {
-        background-color: #10b981;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         color: #ffffff;
-        padding: 6px 10px;
+        padding: 8px 12px;
         margin-top: 5px;
+        border-radius: 6px;
     }
     .totals-row.remaining {
-        background-color: #ef4444;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
         color: #ffffff;
         font-weight: bold;
-        padding: 6px 10px;
+        padding: 8px 12px;
         margin-top: 5px;
+        border-radius: 6px;
     }
     .totals-row.payment-method {
         background-color: #f8fafc;
@@ -110,11 +122,16 @@
     .footer {
         clear: both;
         margin-top: 30px;
-        padding-top: 15px;
-        border-top: 2px solid #e2e8f0;
+        padding: 15px;
+        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+        border-top: 3px solid #667eea;
         text-align: center;
-        color: #64748b;
+        color: #6b7280;
         font-size: 10px;
+        border-radius: 0 0 8px 8px;
+    }
+    .footer p {
+        margin: 3px 0;
     }
 </style>
 

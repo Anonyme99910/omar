@@ -2,161 +2,261 @@
   <div class="stock-container">
     <div class="header">
       <h1>إدارة المخزون</h1>
-      <button @click="showAdjustModal = true" class="btn-primary">
-        <Plus :size="18" />
-        تعديل المخزون
-      </button>
+      <div class="header-actions">
+        <button @click="openAddModal" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+          <Plus :size="20" />
+          {{ viewMode === 'products' ? 'إضافة منتج' : 'إضافة باقة' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- View Mode Toggle -->
+    <div class="flex justify-center mb-6">
+      <div class="inline-flex rounded-lg border-2 border-primary-600 p-1 bg-gray-100">
+        <button
+          @click="viewMode = 'products'"
+          :class="[
+            'px-6 py-2 rounded-md font-medium transition-all',
+            viewMode === 'products' 
+              ? 'bg-primary-600 text-white shadow-md' 
+              : 'text-gray-700 hover:bg-gray-200'
+          ]"
+        >
+          المنتجات
+        </button>
+        <button
+          @click="viewMode = 'packages'"
+          :class="[
+            'px-6 py-2 rounded-md font-medium transition-all',
+            viewMode === 'packages' 
+              ? 'bg-primary-600 text-white shadow-md' 
+              : 'text-gray-700 hover:bg-gray-200'
+          ]"
+        >
+          الباقات
+        </button>
+      </div>
     </div>
 
     <!-- Filters -->
     <div class="filters">
       <input 
-        v-model="filters.search" 
+        v-model="searchQuery" 
         type="text" 
-        placeholder="بحث بالاسم أو SKU..."
+        :placeholder="viewMode === 'products' ? 'بحث بالاسم أو SKU...' : 'بحث عن باقة...'"
         class="search-input"
-        @input="loadStock"
+        @input="viewMode === 'products' ? fetchProducts() : fetchPackages()"
       >
       <label class="checkbox-label">
-        <input type="checkbox" v-model="filters.lowStock" @change="loadStock">
-        <span>عرض المنتجات منخفضة المخزون فقط</span>
-        <span v-if="lowStockCount > 0" class="badge-danger">{{ lowStockCount }}</span>
+        <input type="checkbox" v-model="showLowStock" @change="viewMode === 'products' ? fetchProducts() : fetchPackages()">
+        <span>عرض {{ viewMode === 'products' ? 'المنتجات' : 'الباقات' }} منخفضة المخزون فقط</span>
       </label>
     </div>
 
     <!-- Table -->
     <div class="table-container">
-      <table>
+      <table v-if="viewMode === 'products'">
         <thead>
           <tr>
-            <th>SKU</th>
             <th>المنتج</th>
-            <th>الفئة</th>
-            <th>الكمية المتاحة</th>
-            <th>محجوز</th>
-            <th>المتاح للبيع</th>
-            <th>حد إعادة الطلب</th>
-            <th>الحالة</th>
+            <th>الحجم</th>
+            <th>سعر جملة</th>
+            <th>سعر قطاعي</th>
+            <th>سعر صفحة</th>
+            <th>الكمية</th>
             <th>الإجراءات</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="product in products" :key="product.id">
-            <td>{{ product.sku }}</td>
-            <td>{{ product.name_ar }}</td>
-            <td>{{ product.category?.name_ar }}</td>
-            <td>{{ product.stock_quantity }}</td>
-            <td>{{ product.reserved_qty }}</td>
-            <td :class="{ 'text-danger': product.available_qty <= 0 }">
-              {{ product.available_qty }}
-            </td>
-            <td>{{ product.min_stock_level }}</td>
-            <td>
-              <span 
-                :class="['status-badge', getStockStatus(product)]"
-              >
-                {{ getStockStatusLabel(product) }}
-              </span>
-            </td>
+            <td class="font-medium">{{ product.name_ar }}</td>
+            <td class="text-center">{{ product.volume_ml }}</td>
+            <td class="text-green-600 font-semibold">{{ formatPrice(product.price_جملة) }}</td>
+            <td class="text-blue-600 font-semibold">{{ formatPrice(product.price_قطاعي) }}</td>
+            <td class="text-yellow-600 font-semibold">{{ formatPrice(product.price_صفحة) }}</td>
+            <td class="text-center">{{ product.quantity }}</td>
             <td class="actions">
-              <button 
-                @click="openAdjustModal(product)" 
-                class="btn-icon" 
-                title="تعديل"
-              >
+              <button @click="editProduct(product)" class="btn-icon" title="تعديل">
                 <Edit :size="18" />
               </button>
-              <button 
-                @click="viewMovements(product)" 
-                class="btn-icon" 
-                title="الحركات"
-              >
-                <History :size="18" />
+              <button @click="deleteProduct(product.id)" class="btn-icon text-red-600" title="حذف">
+                <Trash2 :size="18" />
               </button>
             </td>
           </tr>
         </tbody>
       </table>
-    </div>
 
-    <!-- Adjust Stock Modal -->
-    <div v-if="showAdjustModal" class="modal-overlay" @click="showAdjustModal = false">
-      <div class="modal" @click.stop>
-        <div class="modal-header">
-          <h3>تعديل المخزون</h3>
-          <button @click="showAdjustModal = false" class="btn-close">×</button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group" v-if="!selectedProduct">
-            <label>المنتج *</label>
-            <select v-model="adjustForm.product_id">
-              <option value="">اختر المنتج</option>
-              <option v-for="p in allProducts" :key="p.id" :value="p.id">
-                {{ p.name_ar }} ({{ p.sku }})
-              </option>
-            </select>
-          </div>
-          <div v-else class="selected-product">
-            <strong>{{ selectedProduct.name_ar }}</strong>
-            <span>المخزون الحالي: {{ selectedProduct.stock_quantity }}</span>
-          </div>
-          <div class="form-group">
-            <label>الكمية * (استخدم + للإضافة أو - للطرح)</label>
-            <input 
-              v-model.number="adjustForm.quantity" 
-              type="number" 
-              placeholder="مثال: +10 أو -5"
-            >
-          </div>
-          <div class="form-group">
-            <label>السبب *</label>
-            <textarea 
-              v-model="adjustForm.note" 
-              rows="3" 
-              placeholder="اذكر سبب التعديل..."
-              required
-            ></textarea>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button @click="showAdjustModal = false" class="btn-secondary">إلغاء</button>
-          <button @click="adjustStock" class="btn-primary">حفظ</button>
-        </div>
+      <table v-else>
+        <thead>
+          <tr>
+            <th>الباقة</th>
+            <th>سعر جملة</th>
+            <th>سعر قطاعي</th>
+            <th>سعر صفحة</th>
+            <th>الكمية</th>
+            <th>الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="pkg in packages" :key="pkg.id">
+            <td class="font-medium">{{ pkg.name_ar }}</td>
+            <td class="text-green-600 font-semibold">{{ formatPrice(pkg.price_جملة) }}</td>
+            <td class="text-blue-600 font-semibold">{{ formatPrice(pkg.price_قطاعي) }}</td>
+            <td class="text-yellow-600 font-semibold">{{ formatPrice(pkg.price_صفحة) }}</td>
+            <td class="text-center">{{ pkg.quantity }}</td>
+            <td class="actions">
+              <button @click="editPackage(pkg)" class="btn-icon" title="تعديل">
+                <Edit :size="18" />
+              </button>
+              <button @click="deletePackage(pkg.id)" class="btn-icon text-red-600" title="حذف">
+                <Trash2 :size="18" />
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <div v-if="(viewMode === 'products' && products.length === 0) || (viewMode === 'packages' && packages.length === 0)" class="empty-state">
+        {{ viewMode === 'products' ? 'لا توجد منتجات' : 'لا توجد باقات' }}
       </div>
     </div>
 
-    <!-- Movements Modal -->
-    <div v-if="showMovementsModal" class="modal-overlay" @click="showMovementsModal = false">
+    <!-- Add/Edit Product/Package Modal -->
+    <div v-if="showModal" class="modal-overlay" @click="closeModal">
       <div class="modal modal-large" @click.stop>
         <div class="modal-header">
-          <h3>حركات المخزون - {{ selectedProduct?.name_ar }}</h3>
-          <button @click="showMovementsModal = false" class="btn-close">×</button>
+          <h3>
+            {{ viewMode === 'products' 
+              ? (isEditing ? 'تعديل منتج' : 'إضافة منتج جديد')
+              : (isEditing ? 'تعديل باقة' : 'إضافة باقة جديدة')
+            }}
+          </h3>
+          <button @click="closeModal" class="btn-close">×</button>
         </div>
         <div class="modal-body">
-          <table>
-            <thead>
-              <tr>
-                <th>التاريخ</th>
-                <th>النوع</th>
-                <th>الكمية</th>
-                <th>المخزون السابق</th>
-                <th>المخزون الجديد</th>
-                <th>الملاحظات</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="movement in movements" :key="movement.id">
-                <td>{{ formatDateTime(movement.moved_at || movement.created_at) }}</td>
-                <td>{{ getMovementTypeLabel(movement.type) }}</td>
-                <td :class="movement.quantity > 0 ? 'text-success' : 'text-danger'">
-                  {{ movement.quantity > 0 ? '+' : '' }}{{ movement.quantity }}
-                </td>
-                <td>{{ movement.previous_stock }}</td>
-                <td>{{ movement.new_stock }}</td>
-                <td>{{ movement.notes || movement.note || '-' }}</td>
-              </tr>
-            </tbody>
-          </table>
+          <form v-if="viewMode === 'products'" @submit.prevent="submitProduct">
+            <div class="form-row">
+              <div class="form-group">
+                <label>اسم المنتج (عربي) *</label>
+                <input v-model="form.name_ar" type="text" required placeholder="عطر الورد">
+              </div>
+              <div class="form-group">
+                <label>الحجم (مل)</label>
+                <input v-model="form.volume_ml" type="text" placeholder="100 مل">
+                <small class="text-gray-500">مثال: 50 مل، 100 مل، إلخ</small>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>صورة المنتج</label>
+              <input type="file" @change="handlePhotoUpload" accept="image/*" class="file-input">
+              <small class="text-gray-500">اختياري - الحد الأقصى: 5MB - صيغ مدعومة: JPG, PNG, WEBP</small>
+              <div v-if="photoPreview" class="photo-preview">
+                <img :src="photoPreview" alt="Preview" />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>سعر الجملة *</label>
+                <input v-model.number="form.price_جملة" type="number" step="0.01" required placeholder="85.00" class="price-input-wholesale">
+                <small class="text-gray-500">سعر البيع للعملاء الجملة</small>
+              </div>
+              <div class="form-group">
+                <label>سعر القطاعي *</label>
+                <input v-model.number="form.price_قطاعي" type="number" step="0.01" required placeholder="100.00" class="price-input-retail">
+                <small class="text-gray-500">سعر البيع للعملاء القطاعي</small>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>سعر صفحة *</label>
+              <input v-model.number="form.price_صفحة" type="number" step="0.01" required placeholder="110.00" class="price-input-online">
+              <small class="text-gray-500">سعر البيع للعملاء صفحة</small>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>الكمية *</label>
+                <input v-model.number="form.quantity" type="number" required min="0" placeholder="100">
+              </div>
+              <div class="form-group">
+                <label>حد التنبيه *</label>
+                <input v-model.number="form.alert_quantity" type="number" required min="1" placeholder="10">
+                <small class="text-gray-500">سيتم التنبيه عندما تصل الكمية لهذا الحد</small>
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <button type="button" @click="closeModal" class="btn-secondary">إلغاء</button>
+              <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
+                {{ isEditing ? 'تحديث' : 'إضافة' }}
+              </button>
+            </div>
+          </form>
+
+          <!-- Package Form -->
+          <form v-else @submit.prevent="submitPackage">
+            <div class="form-row">
+              <div class="form-group">
+                <label>اسم الباقة (عربي) *</label>
+                <input v-model="packageForm.name_ar" type="text" required placeholder="باقة العطور المميزة">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>الوصف</label>
+              <textarea v-model="packageForm.description" rows="3" placeholder="وصف الباقة..."></textarea>
+            </div>
+
+            <!-- Photo Upload -->
+            <div class="form-group">
+              <label>صورة الباقة</label>
+              <input type="file" @change="handlePhotoUpload" accept="image/*" class="file-input">
+              <div v-if="photoPreview" class="photo-preview">
+                <img :src="photoPreview" alt="Preview">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>سعر الجملة *</label>
+                <input v-model.number="packageForm.price_جملة" type="number" step="0.01" required placeholder="75.00" class="price-input-wholesale">
+                <small class="text-gray-500">سعر البيع للعملاء جملة</small>
+              </div>
+              <div class="form-group">
+                <label>سعر القطاعي *</label>
+                <input v-model.number="packageForm.price_قطاعي" type="number" step="0.01" required placeholder="93.50" class="price-input-retail">
+                <small class="text-gray-500">سعر البيع للعملاء قطاعي</small>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>سعر الصفحة *</label>
+              <input v-model.number="packageForm.price_صفحة" type="number" step="0.01" required placeholder="110.00" class="price-input-online">
+              <small class="text-gray-500">سعر البيع للعملاء صفحة</small>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>الكمية *</label>
+                <input v-model.number="packageForm.quantity" type="number" required min="0" placeholder="50">
+              </div>
+              <div class="form-group">
+                <label>حد التنبيه *</label>
+                <input v-model.number="packageForm.alert_quantity" type="number" required min="1" placeholder="10">
+                <small class="text-gray-500">سيتم التنبيه عندما تصل الكمية لهذا الحد</small>
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <button type="button" @click="closeModal" class="btn-secondary">إلغاء</button>
+              <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
+                {{ isEditing ? 'تحديث' : 'إضافة' }}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
@@ -165,145 +265,257 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Plus, Edit, History } from 'lucide-vue-next'
+import { Plus, Edit, Trash2 } from 'lucide-vue-next'
 import api from '../../services/api'
 import { useToast } from 'vue-toastification'
 
 const toast = useToast()
 
+const viewMode = ref('products') // 'products' or 'packages'
 const products = ref([])
-const allProducts = ref([])
-const movements = ref([])
-const lowStockCount = ref(0)
-const showAdjustModal = ref(false)
-const showMovementsModal = ref(false)
-const selectedProduct = ref(null)
+const packages = ref([])
+const searchQuery = ref('')
+const showLowStock = ref(false)
+const showModal = ref(false)
+const isEditing = ref(false)
+const editingId = ref(null)
+const photoFile = ref(null)
+const photoPreview = ref(null)
 
-const filters = ref({
-  search: '',
-  lowStock: false
-})
-
-const adjustForm = ref({
-  product_id: '',
+const form = ref({
+  name_ar: '',
+  price_جملة: 0,
+  price_قطاعي: 0,
+  price_صفحة: 0,
+  volume_ml: '',
   quantity: 0,
-  note: ''
+  alert_quantity: 10
 })
 
-const loadStock = async () => {
+const packageForm = ref({
+  name_ar: '',
+  description: '',
+  price_جملة: 0,
+  price_قطاعي: 0,
+  price_صفحة: 0,
+  quantity: 0,
+  alert_quantity: 10
+})
+
+const fetchProducts = async () => {
   try {
     const params = {
-      search: filters.value.search || undefined,
-      low_stock: filters.value.lowStock || undefined
+      search: searchQuery.value,
+      low_stock: showLowStock.value ? 1 : 0
     }
-    const response = await api.getStock(params)
-    products.value = response.data.products.data
-    lowStockCount.value = response.data.low_stock_count
+    const response = await api.getProducts(params)
+    products.value = response.data.data || response.data
   } catch (error) {
-    toast.error('فشل تحميل المخزون')
-    console.error(error)
+    console.error('Error fetching products:', error)
+    toast.error('فشل تحميل المنتجات')
   }
 }
 
-const loadAllProducts = async () => {
-  try {
-    const response = await api.getProducts()
-    allProducts.value = response.data.data || response.data
-  } catch (error) {
-    console.error('Failed to load products:', error)
+const handlePhotoUpload = (event) => {
+  const file = event.target.files[0]
+  if (file) {
+    photoFile.value = file
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      photoPreview.value = e.target.result
+    }
+    reader.readAsDataURL(file)
   }
 }
 
-const openAdjustModal = (product) => {
-  selectedProduct.value = product
-  adjustForm.value = {
-    product_id: product.id,
-    quantity: 0,
-    note: ''
-  }
-  showAdjustModal.value = true
-}
-
-const adjustStock = async () => {
-  if (!adjustForm.value.product_id) {
-    toast.error('الرجاء اختيار المنتج')
-    return
-  }
-
-  if (!adjustForm.value.quantity || adjustForm.value.quantity === 0) {
-    toast.error('الرجاء إدخال كمية صحيحة')
-    return
-  }
-
-  if (!adjustForm.value.note) {
-    toast.error('الرجاء إدخال سبب التعديل')
-    return
-  }
-
-  try {
-    await api.adjustStock(adjustForm.value)
-    toast.success('تم تعديل المخزون بنجاح')
-    showAdjustModal.value = false
-    selectedProduct.value = null
-    adjustForm.value = {
-      product_id: '',
+const openAddModal = () => {
+  isEditing.value = false
+  photoFile.value = null
+  photoPreview.value = null
+  
+  if (viewMode.value === 'products') {
+    form.value = {
+      name_ar: '',
+      price_جملة: 0,
+      price_قطاعي: 0,
+      price_صفحة: 0,
+      volume_ml: '',
       quantity: 0,
-      note: ''
+      alert_quantity: 10
     }
-    loadStock()
-  } catch (error) {
-    toast.error('فشل تعديل المخزون')
-    console.error(error)
+  } else {
+    packageForm.value = {
+      name_ar: '',
+      description: '',
+      price_جملة: 0,
+      price_قطاعي: 0,
+      price_صفحة: 0,
+      quantity: 0,
+      alert_quantity: 10
+    }
   }
+  
+  showModal.value = true
 }
 
-const viewMovements = async (product) => {
-  selectedProduct.value = product
+const editProduct = (product) => {
+  isEditing.value = true
+  editingId.value = product.id
+  form.value = {
+    name_ar: product.name_ar,
+    price_جملة: parseFloat(product.price_جملة),
+    price_قطاعي: parseFloat(product.price_قطاعي),
+    price_صفحة: parseFloat(product.price_صفحة),
+    volume_ml: product.volume_ml || '',
+    quantity: product.quantity,
+    alert_quantity: product.alert_quantity
+  }
+  showModal.value = true
+}
+
+const submitProduct = async () => {
   try {
-    const response = await api.getStockMovements({ product_id: product.id })
-    movements.value = response.data.data || response.data
-    showMovementsModal.value = true
+    const formData = new FormData()
+    
+    // Add all form fields - ensure proper values
+    if (form.value.name_ar) formData.append('name_ar', form.value.name_ar)
+    if (form.value.volume_ml) formData.append('volume_ml', form.value.volume_ml)
+    
+    // Ensure prices are numbers
+    formData.append('price_جملة', parseFloat(form.value.price_جملة) || 0)
+    formData.append('price_قطاعي', parseFloat(form.value.price_قطاعي) || 0)
+    formData.append('price_صفحة', parseFloat(form.value.price_صفحة) || 0)
+    
+    formData.append('quantity', parseInt(form.value.quantity) || 0)
+    formData.append('alert_quantity', parseInt(form.value.alert_quantity) || 10)
+    
+    // Add photo if selected
+    if (photoFile.value) {
+      formData.append('photo', photoFile.value)
+    }
+    
+    if (isEditing.value) {
+      formData.append('_method', 'PUT')
+      await api.updateProduct(editingId.value, formData)
+      toast.success('تم تحديث المنتج بنجاح')
+    } else {
+      await api.createProduct(formData)
+      toast.success('تم إضافة المنتج بنجاح')
+    }
+    closeModal()
+    fetchProducts()
   } catch (error) {
-    toast.error('فشل تحميل الحركات')
-    console.error(error)
+    console.error('Error saving product:', error)
+    const errorMsg = error.response?.data?.errors 
+      ? Object.values(error.response.data.errors).flat().join(', ')
+      : error.response?.data?.message || 'حدث خطأ أثناء حفظ المنتج'
+    toast.error(errorMsg)
   }
 }
 
-const getStockStatus = (product) => {
-  if (product.available_qty <= 0) return 'out'
-  if (product.stock_quantity <= product.min_stock_level) return 'low'
-  return 'ok'
-}
-
-const getStockStatusLabel = (product) => {
-  const status = getStockStatus(product)
-  const labels = {
-    out: 'نفذ',
-    low: 'منخفض',
-    ok: 'متوفر'
+const deleteProduct = async (id) => {
+  if (!confirm('هل أنت متأكد من حذف هذا المنتج؟')) return
+  
+  try {
+    await api.deleteProduct(id)
+    toast.success('تم حذف المنتج بنجاح')
+    fetchProducts()
+  } catch (error) {
+    console.error('Error deleting product:', error)
+    toast.error('فشل حذف المنتج')
   }
-  return labels[status]
 }
 
-const getMovementTypeLabel = (type) => {
-  const labels = {
-    sale: 'بيع',
-    return: 'إرجاع',
-    manual_adjust: 'تعديل يدوي',
-    purchase: 'شراء',
-    reserve: 'حجز',
-    release: 'إطلاق'
+const submitPackage = async () => {
+  try {
+    const data = {
+      ...packageForm.value,
+      photo: photoFile.value
+    }
+
+    if (isEditing.value) {
+      await api.updatePackage(editingId.value, data)
+      toast.success('تم تحديث الباقة بنجاح')
+    } else {
+      await api.createPackage(data)
+      toast.success('تم إضافة الباقة بنجاح')
+    }
+
+    closeModal()
+    fetchPackages()
+  } catch (error) {
+    console.error('Error saving package:', error)
+    toast.error(isEditing.value ? 'فشل تحديث الباقة' : 'فشل إضافة الباقة')
   }
-  return labels[type] || type
 }
 
-const formatDateTime = (date) => {
-  return new Date(date).toLocaleString('ar-EG')
+const closeModal = () => {
+  showModal.value = false
+  isEditing.value = false
+  editingId.value = null
+}
+
+const formatPrice = (price) => {
+  return `${parseFloat(price).toFixed(2)} جنيه`
+}
+
+// Package functions
+const fetchPackages = async () => {
+  try {
+    const response = await api.getPackages()
+    let allPackages = response.data.data || response.data
+    
+    // Filter by search
+    if (searchQuery.value) {
+      const query = searchQuery.value.toLowerCase()
+      allPackages = allPackages.filter(pkg => 
+        pkg.name_ar.toLowerCase().includes(query)
+      )
+    }
+    
+    // Filter by low stock
+    if (showLowStock.value) {
+      allPackages = allPackages.filter(pkg => pkg.quantity <= pkg.alert_quantity)
+    }
+    
+    packages.value = allPackages
+  } catch (error) {
+    console.error('Error fetching packages:', error)
+    toast.error('فشل تحميل الباقات')
+  }
+}
+
+const editPackage = (pkg) => {
+  isEditing.value = true
+  editingId.value = pkg.id
+  packageForm.value = {
+    name_ar: pkg.name_ar,
+    description: pkg.description || '',
+    price_جملة: parseFloat(pkg.price_جملة),
+    price_قطاعي: parseFloat(pkg.price_قطاعي),
+    price_صفحة: parseFloat(pkg.price_صفحة),
+    quantity: pkg.quantity,
+    alert_quantity: pkg.alert_quantity
+  }
+  showModal.value = true
+}
+
+const deletePackage = async (id) => {
+  if (!confirm('هل أنت متأكد من حذف هذه الباقة؟')) return
+  
+  try {
+    await api.deletePackage(id)
+    toast.success('تم حذف الباقة بنجاح')
+    fetchPackages()
+  } catch (error) {
+    console.error('Error deleting package:', error)
+    toast.error('فشل حذف الباقة')
+  }
 }
 
 onMounted(() => {
-  loadStock()
-  loadAllProducts()
+  fetchProducts()
+  fetchPackages()
 })
 </script>
 
@@ -323,6 +535,11 @@ onMounted(() => {
 .header h1 {
   font-size: 24px;
   color: #1e293b;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
 }
 
 .filters {
@@ -557,4 +774,157 @@ td {
   font-size: 14px;
   color: #64748b;
 }
+
+.modal-large {
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.btn-success {
+  background: #10b981;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.btn-success:hover {
+  background: #059669;
+}
+
+.bg-red-50 {
+  background-color: #fef2f2;
+}
+
+.text-red-600 {
+  color: #dc2626;
+}
+
+.text-green-600 {
+  color: #059669;
+}
+
+.text-blue-600 {
+  color: #2563eb;
+}
+
+.text-yellow-600 {
+  color: #ca8a04;
+}
+
+.text-gray-500 {
+  color: #6b7280;
+}
+
+.font-mono {
+  font-family: ui-monospace, monospace;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+  font-size: 16px;
+}
+
+.price-preview {
+  margin-top: 10px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.price-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.price-item span {
+  color: #64748b;
+}
+
+.price-item strong {
+  font-size: 15px;
+}
+
+small {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.price-input-wholesale {
+  border-left: 3px solid #059669 !important;
+}
+
+.price-input-retail {
+  border-left: 3px solid #2563eb !important;
+}
+
+.price-input-online {
+  border-left: 3px solid #ca8a04 !important;
+}
+
+.file-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.photo-preview {
+  margin-top: 10px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  max-width: 200px;
+}
+
+.photo-preview img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
 </style>
+

@@ -66,7 +66,23 @@
         </template>
       </nav>
 
-      <div class="absolute bottom-0 left-0 right-0 p-4 border-t">
+      <div class="absolute bottom-0 left-0 right-0 p-4 border-t space-y-2">
+        <!-- User Profile Button -->
+        <router-link
+          to="/profile"
+          class="flex items-center gap-3 px-4 py-3 w-full rounded-lg transition-all hover:bg-blue-50 hover:text-blue-600 text-gray-700"
+          :class="{ 'bg-blue-50 text-blue-600': $route.path === '/profile' }"
+        >
+          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+            <User :size="16" class="text-white" />
+          </div>
+          <div class="flex-1 text-right">
+            <div class="font-medium text-sm">{{ currentUser?.name || 'Admin' }}</div>
+            <div class="text-xs text-gray-500">{{ currentUser?.role || 'admin' }}</div>
+          </div>
+        </router-link>
+        
+        <!-- Logout Button -->
         <button
           @click="handleLogout"
           class="flex items-center gap-3 px-4 py-3 w-full rounded-lg transition-all hover:bg-red-50 hover:text-red-600 text-gray-700"
@@ -111,6 +127,7 @@ import { computed, ref, onMounted } from 'vue'
 import { toLatinNumbers } from '@/utils/numbers'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useInactivityTimer } from '@/composables/useInactivityTimer'
 import {
   LayoutDashboard,
   Package,
@@ -124,56 +141,95 @@ import {
   User,
   CreditCard,
   Menu,
-  X
+  X,
+  TrendingUp,
+  Receipt
 } from 'lucide-vue-next'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 
+// Initialize inactivity timer
+const { timeUntilLogout, showWarning } = useInactivityTimer()
+
 const user = computed(() => authStore.user)
+const currentUser = computed(() => authStore.user)
 const currentDate = ref('')
 const mobileMenuOpen = ref(false)
 
-const menuItems = [
+const allMenuItems = [
   { 
     name: 'لوحة التحكم', 
     path: '/', 
     icon: LayoutDashboard,
+    permission: 'dashboard',
     children: [
-      { name: 'العملاء', path: '/clients', icon: Users },
-      { name: 'الموظفون', path: '/employees', icon: Users },
-      { name: 'الأدوار والصلاحيات', path: '/roles', icon: Tags },
+      { name: 'العملاء', path: '/clients', icon: Users, permission: 'clients' },
+      { name: 'الموظفون', path: '/employees', icon: Users, permission: 'employees' },
+      { name: 'الأدوار والصلاحيات', path: '/roles', icon: Tags, permission: 'roles' },
     ]
   },
-  { name: 'نقطة البيع', path: '/pos', icon: CreditCard },
-  { name: 'الفواتير', path: '/invoices', icon: FileText },
-  { name: 'المخزون', path: '/stock', icon: Package },
-  { name: 'الجرد', path: '/inventory', icon: Boxes },
+  { name: 'نقطة البيع', path: '/pos', icon: CreditCard, permission: 'pos' },
+  { name: 'الفواتير', path: '/invoices', icon: FileText, permission: 'invoices' },
+  { name: 'تحليل المبيعات', path: '/sales-analysis', icon: TrendingUp, permission: 'sales-analysis' },
+  { name: 'المصروفات', path: '/expenses', icon: Receipt, permission: 'expenses' },
+  { name: 'المخزون', path: '/stock', icon: Package, permission: 'stock' },
+  { name: 'المنتجات التالفة', path: '/inventory', icon: Boxes, permission: 'inventory' },
 ]
+
+const menuItems = computed(() => {
+  // Admin sees everything
+  if (authStore.isAdmin) return allMenuItems
+  
+  // If no user or no permissions loaded, return empty
+  if (!authStore.user || !authStore.user.permissions) return []
+  
+  // Filter menu items based on permissions
+  return allMenuItems
+    .filter(item => authStore.hasPermission(item.permission))
+    .map(item => {
+      // Create a copy of the item
+      const filteredItem = { ...item }
+      
+      // Filter children if they exist
+      if (filteredItem.children) {
+        filteredItem.children = filteredItem.children.filter(child => 
+          authStore.hasPermission(child.permission)
+        )
+      }
+      
+      return filteredItem
+    })
+})
 
 const currentPageTitle = computed(() => {
   // Check main menu items
-  const item = menuItems.find(i => i.path === route.path)
+  const item = menuItems.value.find(i => i.path === route.path)
   if (item) return item.name
   
   // Check children
-  for (const menuItem of menuItems) {
+  for (const menuItem of menuItems.value) {
     if (menuItem.children) {
       const child = menuItem.children.find(c => c.path === route.path)
       if (child) return child.name
     }
   }
   
-  return 'لوحة التحكم'
+  return '\u0644\u0648\u062d\u0629 \u0627\u0644\u062a\u062d\u0643\u0645'
 })
 
 const handleLogout = async () => {
   await authStore.logout()
-  router.push('/login')
+  window.location.href = '/parfumes/login'
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // Fetch fresh user data to ensure permissions are loaded
+  if (authStore.isAuthenticated && !authStore.isAdmin) {
+    await authStore.fetchUser()
+  }
+  
   const now = new Date()
   const arDate = now.toLocaleDateString('ar-EG', {
     weekday: 'long',
