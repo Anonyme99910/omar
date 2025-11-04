@@ -1,122 +1,60 @@
-# Perfume Store Management System - Backend
+# Parfumes Laravel Backend API
 
-نظام إدارة متجر عطور متكامل مبني باستخدام Laravel 10
+## Installation
 
-## المتطلبات
-
-- PHP >= 8.1
-- Composer
-- MySQL >= 5.7
-- Laravel 10
-
-## التثبيت
-
-1. تثبيت الاعتماديات:
+1. Install dependencies:
 ```bash
 composer install
 ```
 
-2. نسخ ملف البيئة:
+2. Configure environment:
 ```bash
-copy .env.example .env
-```
-
-3. توليد مفتاح التطبيق:
-```bash
+cp .env.example .env
 php artisan key:generate
 ```
 
-4. إعداد قاعدة البيانات في ملف `.env`:
+3. Configure database in `.env`:
 ```
-DB_DATABASE=perfume_store
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=parfumes
 DB_USERNAME=root
 DB_PASSWORD=
 ```
 
-5. تشغيل الهجرات:
+4. Run migrations:
 ```bash
 php artisan migrate
 ```
 
-6. تشغيل البذور (اختياري):
-```bash
-php artisan db:seed
-```
-
-7. تشغيل السيرفر:
+5. Start server:
 ```bash
 php artisan serve
 ```
 
-## بيانات الدخول الافتراضية
-
-- Email: admin@perfume.com
-- Password: password
-
 ## API Endpoints
 
 ### Authentication
-- POST `/api/login` - تسجيل الدخول
-- POST `/api/register` - إنشاء حساب جديد
-- POST `/api/logout` - تسجيل الخروج
-- GET `/api/me` - معلومات المستخدم الحالي
+- POST `/api/register` - Register new user
+- POST `/api/login` - Login user
+- POST `/api/logout` - Logout user
+- GET `/api/user` - Get authenticated user
+- PUT `/api/user/profile` - Update user profile
+- PUT `/api/user/password` - Change password
 
-### Categories
-- GET `/api/categories` - جميع التصنيفات
-- POST `/api/categories` - إضافة تصنيف
-- GET `/api/categories/{id}` - تفاصيل تصنيف
-- PUT `/api/categories/{id}` - تحديث تصنيف
-- DELETE `/api/categories/{id}` - حذف تصنيف
+### Properties
+- GET `/api/properties` - Get all properties
+- GET `/api/properties/{id}` - Get property by ID
+- POST `/api/properties` - Create new property
+- PUT `/api/properties/{id}` - Update property
+- DELETE `/api/properties/{id}` - Delete property
+- GET `/api/user/properties` - Get user's properties
 
-### Brands
-- GET `/api/brands` - جميع العلامات التجارية
-- POST `/api/brands` - إضافة علامة تجارية
-- GET `/api/brands/{id}` - تفاصيل علامة تجارية
-- PUT `/api/brands/{id}` - تحديث علامة تجارية
-- DELETE `/api/brands/{id}` - حذف علامة تجارية
+### Favorites
+- GET `/api/favorites` - Get user's favorites
+- POST `/api/favorites/{propertyId}` - Add to favorites
+- DELETE `/api/favorites/{propertyId}` - Remove from favorites
 
-### Products
-- GET `/api/products` - جميع المنتجات
-- POST `/api/products` - إضافة منتج
-- GET `/api/products/{id}` - تفاصيل منتج
-- PUT `/api/products/{id}` - تحديث منتج
-- DELETE `/api/products/{id}` - حذف منتج
-- GET `/api/products/barcode/{barcode}` - البحث بالباركود
-- GET `/api/products/low-stock/list` - المنتجات منخفضة المخزون
-- POST `/api/products/{id}/adjust-stock` - تعديل المخزون
-
-### Customers
-- GET `/api/customers` - جميع العملاء
-- POST `/api/customers` - إضافة عميل
-- GET `/api/customers/{id}` - تفاصيل عميل
-- PUT `/api/customers/{id}` - تحديث عميل
-- DELETE `/api/customers/{id}` - حذف عميل
-
-### Sales
-- GET `/api/sales` - جميع المبيعات
-- POST `/api/sales` - إنشاء فاتورة
-- GET `/api/sales/{id}` - تفاصيل فاتورة
-- POST `/api/sales/{id}/cancel` - إلغاء فاتورة
-- GET `/api/sales/today/summary` - ملخص مبيعات اليوم
-
-### Reports
-- GET `/api/reports/dashboard` - لوحة التحكم
-- GET `/api/reports/sales` - تقرير المبيعات
-- GET `/api/reports/products` - تقرير المنتجات
-- GET `/api/reports/inventory` - تقرير المخزون
-- GET `/api/reports/profit` - تقرير الأرباح
-
-## الميزات
-
-- ✅ إدارة المنتجات والتصنيفات والعلامات التجارية
-- ✅ نظام الباركود
-- ✅ إدارة المخزون مع التنبيهات
-- ✅ نظام المبيعات والفواتير
-- ✅ إدارة العملاء
-- ✅ تقارير شاملة
-- ✅ نظام المصادقة
-- ✅ تتبع حركة المخزون
-
-## الترخيص
-
-MIT License
+### Images
+- POST `/api/upload` - Upload image

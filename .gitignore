@@ -1,33 +1,72 @@
-# Laravel
-backend/.env
-backend/vendor/
-backend/node_modules/
-backend/storage/*.key
-backend/storage/logs/
-backend/storage/framework/cache/
-backend/storage/framework/sessions/
-backend/storage/framework/views/
-backend/bootstrap/cache/
+# Dependencies
+node_modules/
+vendor/
 
-# Frontend
-frontend/node_modules/
-frontend/dist/
-frontend/.env
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# Debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# Environment files
+.env
+.env*.local
+backend/.env
+admin-panel/.env
+
+# TypeScript
+*.tsbuildinfo
+
+# Laravel
+backend/vendor/
+backend/storage/*.key
+backend/.phpunit.result.cache
+backend/Homestead.json
+backend/Homestead.yaml
+backend/npm-debug.log
+backend/yarn-error.log
+backend/.env.backup
+backend/.phpunit.result.cache
+
+# Vue.js / Admin Panel
+admin-panel/node_modules/
+admin-panel/dist/
+admin-panel/.DS_Store
+admin-panel/.vscode/
 
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
 
 # OS
-.DS_Store
 Thumbs.db
 
-# Deployment
-parfumes_db_backup.sql
-*.log
-
-# Keep important files
-!backend/storage/app/.gitkeep
-!backend/storage/app/public/.gitkeep
-!backend/storage/framework/.gitkeep
-!backend/storage/logs/.gitkeep
+# 3a9ari reference (not needed in repo)
+3a9ari-main/
