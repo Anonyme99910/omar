@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "LinguaLearn",
+    "slug": "lingua-learn-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#58CC02"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.linguallearn.app"
+    },
+    "android": {
+      "package": "com.linguallearn.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#58CC02"
+      }
+    },
+    "plugins": [],
+    "scheme": "linguallearn",
+    "packagerOpts": {
+      "dev": true
+    }
+  }
+}
