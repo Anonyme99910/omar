@@ -1,11 +1,12 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'http://localhost/parfumes/backend/public/api',
+  baseURL: import.meta.env.VITE_API_URL || 'https://gt-academy.com/parfumes/backend/public/api',
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
-  }
+  },
+  withCredentials: true
 })
 
 // Add token to requests
