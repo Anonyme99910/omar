@@ -1,0 +1,73 @@
+╔════════════════════════════════════════════════════════════════╗
+║                                                                ║
+║     PARFUMES SYSTEM - QUICK START (LOCALHOST)                  ║
+║     نظام إدارة متجر العطور - البدء السريع                     ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
+
+✅ ALL API URLS FIXED FOR LOCALHOST!
+
+═══════════════════════════════════════════════════════════════
+
+🚀 HOW TO START:
+
+1️⃣  Start XAMPP Control Panel
+   → Start Apache
+   → Start MySQL
+
+2️⃣  Open Browser
+   → Go to: http://localhost/parfumes/login
+
+3️⃣  Login
+   → Use your credentials
+   → Start working!
+
+═══════════════════════════════════════════════════════════════
+
+📍 IMPORTANT URLS:
+
+✓ Login:      http://localhost/parfumes/login
+✓ Dashboard:  http://localhost/parfumes/
+✓ API:        http://localhost/parfumes/backend/public/api
+
+═══════════════════════════════════════════════════════════════
+
+✅ WHAT WAS FIXED:
+
+✓ Changed API from gt-academy.com to localhost
+✓ Fixed CORS errors
+✓ Built frontend for Apache
+✓ Configured .htaccess for routing
+✓ Set base path to /parfumes/
+
+═══════════════════════════════════════════════════════════════
+
+🔧 IF YOU SEE ERRORS:
+
+Problem: "Failed to fetch" or CORS error
+→ Already fixed! Just refresh the page (Ctrl+F5)
+
+Problem: 404 Not Found
+→ Make sure Apache is running in XAMPP
+
+Problem: Blank page
+→ Clear browser cache (Ctrl+Shift+Delete)
+→ Check browser console (F12) for errors
+
+Problem: Database error
+→ Make sure MySQL is running in XAMPP
+→ Check database exists in phpMyAdmin
+
+═══════════════════════════════════════════════════════════════
+
+📚 MORE INFO:
+
+Read: LOCALHOST_SETUP_COMPLETE.md
+
+═══════════════════════════════════════════════════════════════
+
+🎉 READY TO USE!
+
+Just open: http://localhost/parfumes/login
+
+═══════════════════════════════════════════════════════════════

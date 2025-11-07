@@ -1,0 +1,4 @@
+name,name_ar,sku,production_cost,price_جملة,price_قطاعي,price_صفحة,volume_ml,quantity,alert_quantity,is_active
+"Rose Perfume","عطر الورد","PRF001",50.00,85.00,100.00,110.00,"100 مل",100,10,1
+"Lavender Oil","زيت اللافندر","PRF002",60.00,95.00,110.00,120.00,"50 مل",50,10,1
+"Jasmine Essence","خلاصة الياسمين","PRF003",70.00,110.00,130.00,145.00,"150 مل",200,15,1

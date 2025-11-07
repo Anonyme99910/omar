@@ -1,0 +1,70 @@
+╔════════════════════════════════════════════════════════════════╗
+║                                                                ║
+║        PARFUMES SYSTEM - HOW TO START LOCALLY                  ║
+║        نظام إدارة متجر العطور - كيفية البدء محلياً            ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
+
+⚠️  IMPORTANT: You CANNOT use localhost/parfumes/ directly!
+
+The error you saw:
+  "Failed to resolve module specifier 'vue'"
+  
+This happens because Vue.js needs a dev server to run.
+
+═══════════════════════════════════════════════════════════════
+
+✅ SOLUTION - Follow These Steps:
+
+1️⃣  Install Node.js (if not installed)
+   → Download from: https://nodejs.org/
+   → Choose LTS version
+   → Install with default settings
+
+2️⃣  Double-click this file:
+   → START_LOCAL_DEV.bat
+
+3️⃣  Wait for the server to start
+   → A command window will open
+   → Wait until you see: "Local: http://localhost:5173"
+
+4️⃣  Open your browser
+   → Go to: http://localhost:5173
+   → You should see the login page!
+
+═══════════════════════════════════════════════════════════════
+
+📝 QUICK REFERENCE:
+
+✓ Frontend (Dev):  http://localhost:5173
+✓ Backend API:     http://localhost/parfumes/backend/public
+✓ Database:        http://localhost/phpmyadmin
+
+═══════════════════════════════════════════════════════════════
+
+🔧 TROUBLESHOOTING:
+
+Problem: "Node.js is not installed"
+→ Install Node.js from https://nodejs.org/
+
+Problem: Port 5173 already in use
+→ Close other Vite servers or change port in vite.config.js
+
+Problem: Blank page
+→ Check browser console (F12) for errors
+→ Make sure XAMPP MySQL is running
+
+═══════════════════════════════════════════════════════════════
+
+📚 MORE HELP:
+
+Read: SETUP_INSTRUCTIONS.md
+Read: README_LOCAL_SETUP.md
+
+═══════════════════════════════════════════════════════════════
+
+🚀 READY TO START?
+
+Double-click: START_LOCAL_DEV.bat
+
+═══════════════════════════════════════════════════════════════
