@@ -94,21 +94,12 @@ export default {
   getTodaySales: () => api.get('/sales/today/summary'),
   downloadInvoicePdf: async (id) => {
     try {
-      const token = localStorage.getItem('token')
-      if (!token) {
-        throw new Error('No authentication token found')
-      }
-
-      const response = await axios.get(
-        `http://localhost/parfumes/backend/public/api/sales/${id}/pdf`,
-        {
-          responseType: 'blob',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/pdf'
-          }
+      const response = await api.get(`/sales/${id}/pdf`, {
+        responseType: 'blob',
+        headers: {
+          'Accept': 'application/pdf'
         }
-      )
+      })
       
       // Check if response is actually a blob
       if (response.data instanceof Blob) {
